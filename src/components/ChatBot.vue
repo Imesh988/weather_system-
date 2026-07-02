@@ -1,12 +1,12 @@
 <template>
   <div class="chatbot-container">
-    <!-- ශීර්ෂය -->
+    <!-- Header -->
     <div class="chatbot-header">
       <h3>🤖 NASA + AI බුද්ධිමත් සහායක</h3>
       <button @click="clearChat" class="clear-btn" title="සංවාදය මකන්න">🗑️</button>
     </div>
 
-    <!-- පණිවිඩ ලැයිස්තුව -->
+    <!-- Messages -->
     <div class="chatbot-messages" ref="messageContainer">
       <div v-for="(msg, index) in messages" :key="index" 
            :class="['message', msg.sender === 'user' ? 'user' : 'bot']">
@@ -16,19 +16,9 @@
           <img v-if="msg.image" :src="msg.image" class="msg-image" @error="msg.image = null" />
         </div>
       </div>
-      
-      <!-- Typing indicator (AI හිතනවා) -->
-      <div v-if="isLoading" class="message bot typing">
-        <div class="message-content">
-          <span class="sender">🤖</span>
-          <span class="text typing-dots">
-            <span>.</span><span>.</span><span>.</span>
-          </span>
-        </div>
-      </div>
     </div>
 
-    <!-- ආදාන පෙට්ටිය -->
+    <!-- Input -->
     <div class="chatbot-input">
       <input 
         v-model="userInput" 
@@ -48,25 +38,12 @@ import { getApod, searchNasaImages } from '../services/nasaApi';
 import { getWeatherByCity } from '../services/weatherApi';
 import { getAiResponse } from '../services/aiApi';
 
-// සිංහල නගර නම් → ඉංග්‍රීසි නගර නම් Map එක (වැඩි කරන ලදී)
 const cityNameMap = {
   'කොළඹ': 'Colombo',
   'ගාල්ල': 'Galle',
   'මාතර': 'Matara',
   'මහනුවර': 'Kandy',
   'නුවරඑළිය': 'Nuwara Eliya',
-  'බත්තරමුල්ල': 'Battaramulla',
-  'යාපනය': 'Jaffna',
-  'ත්‍රිකුණාමලය': 'Trincomalee',
-  'අනුරාධපුර': 'Anuradhapura',
-  'කුරුණෑගල': 'Kurunegala',
-  'බදුල්ල': 'Badulla',
-  'රත්නපුර': 'Ratnapura',
-  'මොරටුව': 'Moratuwa',
-  'දෙහිවල': 'Dehiwala',
-  'මීගමුව': 'Negombo',
-  'ගම්පහ': 'Gampaha',
-  'කලුතර': 'Kalutara'
 };
 
 export default {
@@ -94,23 +71,20 @@ export default {
         let botImage = null;
         let usedSource = '';
 
-        // --- 1. කාලගුණය හඳුනාගැනීම (Weather) ---
-        const weatherKeywords = ['කාලගුණ', 'weather', 'උෂ්ණත්ව', 'temperature', 'වැස්ස', 'rain', 'හිම', 'snow', 'සුළඟ', 'wind', 'ආර්ද්‍රතා', 'humidity'];
+        // Weather detection
+        const weatherKeywords = ['කාලගුණ', 'weather', 'උෂ්ණත්ව', 'temperature'];
         const isWeatherQuery = weatherKeywords.some(kw => trimmed.toLowerCase().includes(kw.toLowerCase()));
 
         if (isWeatherQuery) {
           let city = null;
-          // සිංහල: "කොළඹ කාලගුණය"
           const sinCityMatch = trimmed.match(/^([\u0D80-\u0DFF\w\s]+?)\s*(?:කාලගුණ|weather)/i);
           if (sinCityMatch) {
             let rawCity = sinCityMatch[1].trim();
             city = cityNameMap[rawCity] || rawCity;
           }
-          // ඉංග්‍රීසි: "weather in London"
           const engCityMatch = trimmed.match(/weather in (\w+)/i);
           if (engCityMatch) city = engCityMatch[1];
-          
-          if (!city) city = 'Colombo'; // Default
+          if (!city) city = 'Colombo';
 
           const weatherData = await getWeatherByCity(city);
           if (weatherData) {
@@ -131,14 +105,11 @@ export default {
             botImage = `https://openweathermap.org/img/wn/${icon}@4x.png`;
             usedSource = '🌍 OpenWeatherMap';
           } else {
-            botReply = `❌ කණගාටුයි, "${city}" නගරයේ කාලගුණය සොයාගත නොහැක. නිවැරදි නගරයක් උත්සාහ කරන්න.`;
+            botReply = `❌ කණගාටුයි, "${city}" නගරයේ කාලගුණය සොයාගත නොහැක.`;
           }
         }
-
-        // --- 2. NASA APOD (අද පින්තූරය) ---
-        else if (trimmed.toLowerCase().includes('අද පින්තූර') || 
-                 trimmed.toLowerCase().includes('apod') ||
-                 trimmed.toLowerCase().includes('astronomy picture')) {
+        // NASA APOD
+        else if (trimmed.toLowerCase().includes('අද පින්තූර') || trimmed.toLowerCase().includes('apod')) {
           const apod = await getApod();
           if (apod) {
             botReply = `<b>📸 ${apod.title}</b><br/><br/>${apod.explanation}`;
@@ -148,14 +119,8 @@ export default {
             botReply = '❌ අද අභ්‍යවකාශ පින්තූරය ලබාගැනීම අසාර්ථකයි.';
           }
         }
-
-        // --- 3. NASA පින්තූර සෙවීම (අඟහරු/ගැලැක්සි වගේ) ---
-        else if (trimmed.toLowerCase().includes('පින්තූර') || 
-                 trimmed.toLowerCase().includes('picture') ||
-                 trimmed.toLowerCase().includes('image') ||
-                 trimmed.toLowerCase().includes('mars') ||
-                 trimmed.toLowerCase().includes('ගැලැක්සි') ||
-                 trimmed.toLowerCase().includes('අඟහරු')) {
+        // NASA Image Search
+        else if (trimmed.toLowerCase().includes('පින්තූර') || trimmed.toLowerCase().includes('picture') || trimmed.toLowerCase().includes('mars')) {
           const images = await searchNasaImages(trimmed);
           if (images && images.length > 0) {
             const first = images[0];
@@ -168,15 +133,13 @@ export default {
             botReply = `❌ "${trimmed}" සම්බන්ධ පින්තූරයක් හමු නොවීය.`;
           }
         }
-
-        // --- 4. සාමාන්‍ය/අභ්‍යවකාශ ප්‍රශ්න (Groq AI) ---
+        // General AI
         else {
           const aiResponse = await getAiResponse(trimmed, this.chatHistory);
           botReply = aiResponse || '🤖 සමාවන්න, මට උත්තරයක් හොයාගන්න බැරි වුණා.';
           usedSource = '🧠 Groq AI';
         }
 
-        // පණිවිඩය එකතු කරන්න (මූලාශ්‍රය පෙන්වීමට)
         this.messages.push({ 
           sender: 'bot', 
           text: botReply + `<br/><br/><span style="font-size: 10px; opacity: 0.5;">📡 මූලාශ්‍රය: ${usedSource}</span>`,
@@ -199,7 +162,6 @@ export default {
     clearChat() {
       this.messages = [];
       this.chatHistory = [];
-      // පිළිගැනීමේ පණිවිඩය නැවත එකතු කරන්න
       this.messages.push({
         sender: 'bot',
         text: `
@@ -223,7 +185,7 @@ export default {
     }
   },
   mounted() {
-    this.clearChat(); // පිළිගැනීමේ පණිවිඩය පෙන්වීමට
+    this.clearChat();
   }
 };
 </script>
@@ -335,22 +297,6 @@ export default {
   margin-top: 8px;
   display: block;
   border: 1px solid #334155;
-}
-
-/* Typing dots */
-.typing .text {
-  display: flex;
-  gap: 4px;
-}
-.typing-dots span {
-  animation: blink 1.4s infinite both;
-}
-.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-@keyframes blink {
-  0% { opacity: 0.2; }
-  20% { opacity: 1; }
-  100% { opacity: 0.2; }
 }
 
 /* Input */

@@ -1,8 +1,8 @@
 <template>
-  <nav class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-slide-up">
+  <nav class="fixed top-10 right-9 left-[67%] -translate-x-1/2 z-50 animate-slide-down">
     <!-- Main Navbar Container -->
     <div 
-      class="flex items-center gap-1 sm:gap-2 p-2 sm:p-3 px-4 sm:px-6 rounded-[3rem] border border-cyan-500/20 bg-[#0a0a0f]/90 backdrop-blur-3xl shadow-[0_20px_50px_rgba(0,255,255,0.2)]"
+      class="flex items-center gap-1 sm:gap-2 p-2 sm:p-3 px-4 sm:px-6 rounded-[3rem]"
     >
       <router-link 
         v-for="link in navLinks" 
@@ -36,7 +36,7 @@
           </span>
         </div>
 
-        <!-- Label Text - සැඟවී ඇත, hover විට පමණක් පෙනේ -->
+        <!-- Label Text -->
         <span 
           class="mt-1 sm:mt-2 text-[9px] sm:text-[11px] font-bold uppercase tracking-widest transition-all duration-300 z-10 opacity-0 group-hover:opacity-100 group-[.active-link]:opacity-100"
           :class="route.path === link.path ? 'text-cyan-400' : 'text-gray-500 group-hover:text-cyan-200'"
@@ -81,13 +81,13 @@ const navLinks = [
 </script>
 
 <style scoped>
-/* Entry Animation */
-@keyframes slideUp {
-  from { transform: translate(-50%, 100px); opacity: 0; }
+/* Entry Animation - උඩ සිට පහළට එන */
+@keyframes slideDown {
+  from { transform: translate(-50%, -100px); opacity: 0; }
   to { transform: translate(-50%, 0); opacity: 1; }
 }
-.animate-slide-up {
-  animation: slideUp 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards;
+.animate-slide-down {
+  animation: slideDown 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards;
 }
 
 /* Floating Animation for Icons */
@@ -99,14 +99,14 @@ const navLinks = [
   animation: float 3s ease-in-out infinite;
 }
 
-/* SVG Styling: දැන් සැමවිටම පෙනෙන ලෙස */
+/* SVG Styling */
 :deep(svg) {
   stroke-dasharray: 100;
-  stroke-dashoffset: 0; /* මුලින්ම පෙනෙන සේ */
+  stroke-dashoffset: 0;
   transition: filter 0.3s ease;
 }
 
-/* Hover/Active විට දීප්තිය */
+/* Hover/Active දීප්තිය */
 .group:hover :deep(svg),
 .active-link :deep(svg) {
   filter: drop-shadow(0 0 8px rgba(34, 211, 238, 0.8));

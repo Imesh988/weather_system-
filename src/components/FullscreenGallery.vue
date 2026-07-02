@@ -1,5 +1,5 @@
 <template>
-  <!-- Gallery Container -->
+  <!-- Gallery Container - Fullscreen Mode එකේදී Fixed Overlay එකක් වෙයි -->
   <div 
     class="relative w-full h-full flex items-center justify-center transition-all duration-500"
     :class="{
@@ -10,7 +10,9 @@
     <button 
       @click.stop="toggleFullscreen" 
       class="absolute top-4 right-4 z-50 bg-white/80 hover:bg-white hover:scale-105 p-2.5 rounded-full shadow-xl border border-slate-200/80 transition-all duration-300 backdrop-blur-sm"
+      :class="{ 'shadow-2xl': isFullscreen }"
     >
+      <!-- Expand / Collapse Icons -->
       <svg v-if="!isFullscreen" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
       </svg>
@@ -24,36 +26,29 @@
       class="flex-1 relative flex items-center justify-center w-full h-full overflow-visible"
       style="perspective: 1200px;"
     >
-      <!-- Circle Wrapper -->
+      <!-- Circle Wrapper - Dynamic Sizes (එක :style එකකට ඒකාබද්ධ කර ඇත) -->
       <div 
         class="relative transition-all duration-700 ease-in-out"
-        :class="{ 'animate-pause': isHovering }"
         :style="{
           width: circleSize + 'px',
           height: circleSize + 'px',
           transformStyle: 'preserve-3d',
           animation: `spinCircle ${rotationSpeed} linear infinite`
         }"
+        :class="{ 'animate-pause': isHovering }"
         @mouseenter="isHovering = true"
         @mouseleave="isHovering = false"
       >
-        <!-- Rotating Images - සියල්ල JavaScript මගින් හසුරුවයි -->
+        <!-- Rotating Images -->
         <div
           v-for="(image, index) in imageList"
           :key="index"
-          class="absolute rounded-full border-4 shadow-2xl overflow-hidden"
-          :class="{
-            'border-white/90': hoveredIndex !== index,
-            'border-blue-500': hoveredIndex === index
-          }"
+          class="absolute rounded-full border-4 border-white/90 shadow-2xl overflow-hidden transition-all duration-300"
           :style="{
             width: imageSize + 'px',
             height: imageSize + 'px',
-            transform: `rotateY(${index * (360 / imageList.length)}deg) translateZ(${hoveredIndex === index ? hoverTranslateZ : translateZ}px) scale(${hoveredIndex === index ? 1.25 : 1})`,
+            transform: `rotateY(${index * (360 / imageList.length)}deg) translateZ(${translateZ}px)`,
             background: `url(${image.url}) center/cover no-repeat`,
-            zIndex: hoveredIndex === index ? 999 : 'auto',
-            boxShadow: hoveredIndex === index ? '0 30px 60px rgba(0,0,0,0.5)' : '0 10px 30px rgba(0,0,0,0.2)',
-            transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease'
           }"
           @mouseenter="hoveredIndex = index"
           @mouseleave="hoveredIndex = null"
@@ -103,7 +98,10 @@ const imageList = ref([
   { url: 'https://picsum.photos/seed/sat8/400/400' },
 ]);
 
-const isFullscreen = ref(false);
+// මෙය true කරන්න, එවිට පිටුව Load වූ ගමන්ම Fullscreen එකෙන් පෙන්වයි (විකල්ප)
+// const isFullscreen = ref(true); 
+const isFullscreen = ref(false); // පෙරනිමියෙන් Card එක තුළ
+
 const isHovering = ref(false);
 const hoveredIndex = ref(null);
 
@@ -124,7 +122,12 @@ const rotationSpeed = computed(() => {
 // === Fullscreen Toggle Function ===
 const toggleFullscreen = () => {
   isFullscreen.value = !isFullscreen.value;
-  document.body.style.overflow = isFullscreen.value ? 'hidden' : '';
+  
+  if (isFullscreen.value) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = '';
+  }
 };
 
 // Component එක Unmount වෙද්දී Scroll Lock එක ඉවත් කරන්න
@@ -134,7 +137,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Keyframes එක Scoped එක තුළ හොඳින් වැඩ කරයි */
 @keyframes spinCircle {
   0% { transform: rotateY(0deg); }
   100% { transform: rotateY(360deg); }
@@ -142,6 +144,22 @@ onUnmounted(() => {
 
 .animate-pause {
   animation-play-state: paused !important;
+}
+
+/* Hover Effect - CSS v-bind එක හරියට නිවැරදි කර ඇත */
+.absolute.rounded-full {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease, border-color 0.3s ease;
+}
+.absolute.rounded-full:hover {
+  transform: rotateY(0deg) translateZ(v-bind(hoverTranslateZ)) scale(1.2) !important;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+  z-index: 999;
+  border-color: #3B82F6;
+}
+
+/* Fullscreen Mode එකේදී Button එකට Hover වෙද්දී */
+button:hover svg {
+  stroke: #2563EB;
 }
 
 /* Browser Support */
